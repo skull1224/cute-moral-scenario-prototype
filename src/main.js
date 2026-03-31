@@ -217,6 +217,15 @@ app.innerHTML = `
             논문처럼 후속 판단 문항을 붙일 수 있도록, 프로토타입에는 자기평가 문항 두 개를 넣었습니다.
           </p>
 
+          <div class="question-card" data-question="cuteness">
+            <h3>시청한 영상이 얼마나 귀여웠나요?</h3>
+            <div class="scale" id="cuteness-scale"></div>
+            <div class="scale-labels">
+              <span>1 전혀 귀엽지 않음</span>
+              <span>7 매우 귀여움</span>
+            </div>
+          </div>
+
           <div class="question-card" data-question="justification">
             <h3>방금 자신의 선택이 얼마나 정당했다고 느껴졌나요?</h3>
             <div class="scale" id="justification-scale"></div>
@@ -267,6 +276,7 @@ app.innerHTML = `
 `;
 
 const screens = [...document.querySelectorAll('.screen')];
+const shell = document.querySelector('.shell');
 const timelineItems = [...document.querySelectorAll('#timeline li')];
 const stageLabel = document.querySelector('#stage-label');
 const objectiveText = document.querySelector('#objective-text');
@@ -305,6 +315,7 @@ const appState = {
     completionMs: null
   },
   ratings: {
+    cuteness: null,
     justification: null,
     immersion: null
   },
@@ -334,6 +345,7 @@ function resetState() {
     completionMs: null
   };
   appState.ratings = {
+    cuteness: null,
     justification: null,
     immersion: null
   };
@@ -372,6 +384,7 @@ function logEvent(type, detail = {}) {
 
 function setStage(stage) {
   appState.currentStage = stage;
+  shell.dataset.stage = stage;
   stageLabel.textContent = {
     intro: '소개',
     prime: '귀여운 영상',
@@ -437,6 +450,7 @@ function renderScale(targetId, key) {
   }).join('');
 }
 
+renderScale('cuteness-scale', 'cuteness');
 renderScale('justification-scale', 'justification');
 renderScale('immersion-scale', 'immersion');
 

@@ -59,6 +59,18 @@ button {
   padding: 24px;
 }
 
+.shell[data-stage='prime'],
+.shell[data-stage='game'] {
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 0;
+}
+
+.shell[data-stage='prime'] .side-panel,
+.shell[data-stage='game'] .side-panel {
+  display: none;
+}
+
 .ambient {
   position: fixed;
   inset: auto;
@@ -451,6 +463,52 @@ button {
   position: relative;
 }
 
+.shell[data-stage='prime'] .main-panel,
+.shell[data-stage='game'] .main-panel {
+  min-height: 100vh;
+}
+
+.shell[data-stage='prime'] .screen,
+.shell[data-stage='game'] .screen {
+  min-height: 100vh;
+}
+
+.shell[data-stage='prime'] .prime-card {
+  position: relative;
+  min-height: 100vh;
+  padding: 0;
+  gap: 0;
+  grid-template-columns: 1fr;
+  background: #120f0d;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.shell[data-stage='prime'] .prime-copy {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 2;
+  max-width: 360px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(22, 18, 16, 0.54);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.shell[data-stage='prime'] .prime-copy p,
+.shell[data-stage='prime'] .prime-copy .screen-tag,
+.shell[data-stage='prime'] .prime-copy h2 {
+  color: white;
+}
+
+.shell[data-stage='prime'] .prime-frame {
+  min-height: 100vh;
+  border-radius: 0;
+}
+
 .game-shell {
   position: relative;
   width: 100%;
@@ -462,6 +520,17 @@ button {
   box-shadow: var(--shadow);
 }
 
+.shell[data-stage='game'] .game-shell {
+  min-height: 100vh;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.shell[data-stage='game'] #game-canvas {
+  height: 100vh;
+}
+
 #game-canvas {
   display: block;
   width: 100%;
@@ -471,13 +540,14 @@ button {
 .game-hud {
   position: absolute;
   top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(920px, calc(100% - 28px));
+  left: 14px;
+  right: 14px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 12px;
+  grid-template-columns: 320px 220px;
+  justify-content: space-between;
+  gap: 16px;
   align-items: start;
+  pointer-events: none;
 }
 
 .game-overlay-card {
@@ -486,6 +556,7 @@ button {
   background: rgba(255, 249, 241, 0.84);
   border: 1px solid rgba(109, 82, 63, 0.12);
   backdrop-filter: blur(16px);
+  pointer-events: auto;
 }
 
 .game-hud-top,
@@ -549,6 +620,7 @@ button {
   background: rgba(255, 249, 241, 0.84);
   border: 1px solid rgba(109, 82, 63, 0.12);
   backdrop-filter: blur(16px);
+  pointer-events: auto;
 }
 
 .mini-map-card strong {
@@ -785,6 +857,7 @@ button {
 
   .game-hud {
     grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 }
 
@@ -831,8 +904,9 @@ button {
   }
 
   .game-hud {
-    width: calc(100% - 20px);
     top: 10px;
+    left: 10px;
+    right: 10px;
     gap: 8px;
   }
 
@@ -848,6 +922,46 @@ button {
 
   .legend span {
     font-size: 0.76rem;
+  }
+
+  .shell[data-stage='prime'] .prime-copy {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    max-width: none;
+    padding: 14px 16px;
+  }
+
+  .shell[data-stage='prime'] .prime-copy h2 {
+    font-size: 1.35rem;
+  }
+
+  .touch-controls {
+    left: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    gap: 6px;
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(255, 249, 241, 0.4);
+    backdrop-filter: blur(10px);
+  }
+
+  .touch-row {
+    gap: 6px;
+  }
+
+  .touch-controls button,
+  .touch-action {
+    min-width: 60px;
+    min-height: 54px;
+    border-radius: 16px;
+    box-shadow: 0 10px 24px rgba(58, 43, 33, 0.1);
+  }
+
+  .touch-action {
+    right: 10px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+    min-width: 112px;
   }
 }
 
