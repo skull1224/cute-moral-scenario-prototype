@@ -1,7 +1,58 @@
 import './style.css';
 
-const PRIME_DURATION_SECONDS = 15;
-const PRIME_VIDEO_SRC = '/media/cute-prime.mp4';
+const STIMULUS_DURATION_MS = 5000;
+const STIMULUS_COUNT = 5;
+const STIMULUS_LIBRARY_COUNTS = {
+  neutral: 80,
+  cute: 65
+};
+
+const CONDITIONS = {
+  neutral: {
+    code: 'A',
+    label: '보통 자극',
+    description: '일상적인 중립 그림 5장',
+    accent: 'neutral'
+  },
+  cute: {
+    code: 'B',
+    label: '귀여운 자극',
+    description: '귀여운 동물 그림 5장',
+    accent: 'cute'
+  }
+};
+
+const STIMULI = {
+  neutral: Array.from({ length: STIMULUS_LIBRARY_COUNTS.neutral }, (_, index) => ({
+    id: `neutral-${String(index + 1).padStart(2, '0')}`,
+    src: `/stimuli/neutral/neutral-${String(index + 1).padStart(2, '0')}.jpg`
+  })),
+  cute: Array.from({ length: STIMULUS_LIBRARY_COUNTS.cute }, (_, index) => ({
+    id: `cute-${String(index + 1).padStart(2, '0')}`,
+    src: `/stimuli/cute/cute-${String(index + 1).padStart(2, '0')}.jpg`
+  }))
+};
+
+const VIGNETTES = [
+  {
+    id: 'exam-cheating',
+    title: '시나리오 1. 시험 부정행위',
+    text:
+      '이화는 평소 스스로에게 높은 기준을 두는 대학생입니다. 기말고사에서 다른 과목은 준비를 잘했지만 마지막 과목은 시간이 부족해 충분히 복습하지 못했습니다. 장학금을 유지하려면 높은 점수가 필요하다고 느낀 이화는 시험 중 부정행위를 하기로 했고, 결국 좋은 성적을 받아 장학금을 받았습니다.'
+  },
+  {
+    id: 'ghost-writing',
+    title: '시나리오 2. 대필 논문 제출',
+    text:
+      '민수는 국비 해외연수 선발 경쟁이 매우 치열한 학과에 다니고 있습니다. 전반적인 성적과 활동은 우수했지만 연구 역량은 아직 부족했습니다. 선발 가능성을 높이기 위해 다른 사람에게 논문 작성을 대신 부탁했고, 그 논문을 제출해 결국 해외연수 기회를 얻었습니다.'
+  },
+  {
+    id: 'resume-fabrication',
+    title: '시나리오 3. 이력서 허위 기재',
+    text:
+      '지현은 졸업을 앞두고 대기업 인턴 자리에 지원했습니다. 학점은 우수했지만 아르바이트나 실습 경험이 거의 없어 이력서가 비어 보였습니다. 경쟁이 치열한 인턴 자리를 꼭 얻고 싶었던 지현은 실제로 하지 않은 실무 경험을 이력서에 적었고, 결국 그 인턴 자리를 얻게 되었습니다.'
+  }
+];
 
 const app = document.querySelector('#app');
 
@@ -9,806 +60,662 @@ app.innerHTML = `
   <div class="shell">
     <div class="ambient ambient-one"></div>
     <div class="ambient ambient-two"></div>
+
     <aside class="side-panel">
-      <div class="panel-copy">
-        <p class="eyebrow">ONLINE EXPERIMENT PROTOTYPE</p>
-        <h1>귀여움 프라임 이후 도덕적 선택 행동 관찰</h1>
-        <p class="lead">
-          Zhang & Ye (2023)의 귀여움 프라이밍 흐름을 온라인 환경으로 옮긴 프로토타입입니다.
-          그림 프라이밍 대신 15초 영상, 판단 문항 대신 3D 시나리오 행동을 기록합니다.
-        </p>
-      </div>
-
-      <section class="meta-card">
-        <div>
-          <span class="meta-label">프라임 자극</span>
-          <strong>귀여운 고양이 영상 15초</strong>
-        </div>
-        <div>
-          <span class="meta-label">행동 과제</span>
-          <strong>장학금 시험에서의 부정행위 선택</strong>
-        </div>
-        <div>
-          <span class="meta-label">로그 포인트</span>
-          <strong>메시지 확인, 답안 작성 방식, 제출 시간</strong>
-        </div>
-      </section>
-
       <section class="status-card">
         <div class="status-header">
           <div>
             <span class="meta-label">현재 단계</span>
             <strong id="stage-label">소개</strong>
           </div>
-          <div class="timer-chip" id="timer-chip">01:15</div>
+          <div class="timer-chip" id="timer-chip">대기</div>
         </div>
         <p class="objective-label">현재 목표</p>
-        <h2 id="objective-text">실험 시작 버튼을 눌러 준비하세요.</h2>
+        <h2 id="objective-text">조건 A 또는 B를 선택하세요.</h2>
         <p class="interaction-hint" id="interaction-hint">
-          본 프로토타입은 데스크톱과 모바일 모두에서 실행됩니다.
+          선택한 조건에 따라 사진 평정 과제가 시작됩니다.
         </p>
-      </section>
-
-      <section class="timeline-card">
-        <p class="meta-label">실험 흐름</p>
-        <ol class="timeline" id="timeline">
-          <li data-stage="intro" class="is-active">소개</li>
-          <li data-stage="prime">귀여운 영상</li>
-          <li data-stage="brief">시나리오 안내</li>
-          <li data-stage="game">3D 시나리오</li>
-          <li data-stage="survey">후속 평가</li>
-          <li data-stage="result">로그 확인</li>
-        </ol>
-      </section>
-
-      <section class="event-card">
-        <p class="meta-label">최근 이벤트</p>
-        <ul id="event-feed" class="event-feed">
-          <li>대기 중</li>
-        </ul>
       </section>
     </aside>
 
     <main class="main-panel">
       <section class="screen is-active" data-screen="intro">
-        <div class="hero-card">
-          <span class="screen-tag">Prototype Setup</span>
-          <h2>영상 프라임 후 3D 선택 상황으로 바로 넘어갑니다.</h2>
+        <div class="hero-card intro-card">
+          <span class="screen-tag">Experiment Guide</span>
+          <h2>안내를 읽고 조건 A 또는 B를 선택하세요.</h2>
           <p>
-            논문의 핵심 구조인 "귀여운 자극 노출 후 도덕 관련 평가"를 행동 기반 과제로 바꿨습니다.
-            이 버전은 한 개의 귀여운 영상과 한 개의 시험 부정행위 시나리오를 포함합니다.
+            먼저 사진을 보면서 각 자극에 대해 1점에서 7점 사이로 응답합니다. 이후에는 사진 과제와는
+            별개의 시나리오 판단 과제가 이어집니다.
           </p>
-          <div class="hero-grid">
+          <div class="intro-guide">
             <article>
-              <h3>프라임</h3>
-              <p>15초 동안 귀여운 고양이 영상을 전체 화면으로 재생합니다.</p>
+              <h3>1. 시작</h3>
+              <p>아래의 조건 A 또는 B 중 하나를 선택하면 실험이 바로 시작됩니다.</p>
             </article>
             <article>
-              <h3>시나리오</h3>
-              <p>3D 시험장 안에서 유출 답안 메시지를 무시할지 사용할지 선택합니다.</p>
+              <h3>2. 사진 평정</h3>
+              <p>사진은 총 5장 제시되며 각 사진은 5초 동안 나타납니다. 1~7점으로 응답해 주세요.</p>
             </article>
             <article>
-              <h3>기록</h3>
-              <p>선택 시점과 완료 시간, 후속 자기평가를 JSON으로 확인할 수 있습니다.</p>
+              <h3>3. 시나리오 판단</h3>
+              <p>사진 과제 후에는 짧은 상황 설명을 읽고 행동의 도덕성을 1~7점으로 평정합니다.</p>
             </article>
           </div>
-          <button class="primary-button" id="start-button">프로토타입 시작</button>
+          <div class="condition-grid">
+            <button class="condition-button code-button" data-condition="neutral">
+              <span class="condition-key">A</span>
+              <strong>조건 A</strong>
+            </button>
+            <button class="condition-button code-button" data-condition="cute">
+              <span class="condition-key">B</span>
+              <strong>조건 B</strong>
+            </button>
+          </div>
+          <p class="footnote">키보드 <code>A</code>, <code>B</code>로도 선택할 수 있습니다.</p>
         </div>
       </section>
 
-      <section class="screen" data-screen="prime">
-        <div class="prime-card">
-          <div class="prime-copy">
-            <span class="screen-tag">Cute Prime</span>
-            <h2>15초간 영상을 시청합니다.</h2>
-            <p>
-              실제 실험에서는 이 구간만 자극 조건별 영상으로 교체하면 됩니다. 이 프로토타입에서는
-              귀여운 고양이 영상을 반복 재생해 15초 동안 노출합니다.
-            </p>
+      <section class="screen" data-screen="stimuli">
+        <div class="stimulus-stage">
+          <div class="stimulus-topbar">
+            <div class="stimulus-badge" id="stimulus-condition-badge">사진 평정</div>
+            <div class="stimulus-counter" id="stimulus-counter">1 / 5</div>
           </div>
-          <div class="prime-frame">
-            <video
-              id="prime-video"
-              class="prime-video"
-              playsinline
-              muted
-              loop
-              preload="auto"
-              src="${PRIME_VIDEO_SRC}"
-            ></video>
-            <div class="prime-overlay">
-              <div class="progress-label">
-                <span>Prime Exposure</span>
-                <strong id="prime-countdown">15s</strong>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" id="prime-progress"></div>
-              </div>
+
+          <div class="stimulus-frame">
+            <img id="stimulus-image" class="stimulus-image" alt="experiment stimulus" />
+          </div>
+
+          <div class="stimulus-bottom-panel">
+            <div class="stimulus-timer">
+              <span>남은 시간</span>
+              <strong id="stimulus-countdown">5.0</strong>
             </div>
+
+            <div class="stimulus-progress">
+              <div id="stimulus-progress-fill" class="stimulus-progress-fill"></div>
+            </div>
+
+            <div class="rating-prompt-wrap">
+              <p class="rating-prompt">이 사진이 얼마나 귀여웠나요?</p>
+              <p class="rating-hint">1 = 전혀 귀엽지 않음, 7 = 매우 귀여움</p>
+            </div>
+
+            <div class="scale compact-scale" id="stimulus-scale"></div>
+            <p class="keyboard-hint">숫자 키 1~7 또는 버튼 클릭으로 응답</p>
           </div>
         </div>
       </section>
 
-      <section class="screen" data-screen="brief">
-        <div class="brief-card">
-          <span class="screen-tag">Scenario Brief</span>
-          <h2>장학금 유지 심사 시험장</h2>
+      <section class="screen" data-screen="bridge">
+        <div class="survey-card vignette-card">
+          <span class="screen-tag">Task Transition</span>
+          <h2>다음 과제는 앞선 사진 평정과는 별개의 과제입니다.</h2>
           <p>
-            논문 부록의 "시험에서 부정행위를 통해 장학금을 얻는 상황"을 3D 공간으로 옮겼습니다.
-            당신은 시험장에 들어가고, 시험 도중 친구가 유출 답안을 보냅니다. 메시지를 열람할지,
-            실제로 부정행위를 실행할지, 그리고 언제 제출할지를 기록합니다.
+            앞서 수행한 사진 평정 과제는 여기서 종료되었습니다. 이제부터는 사진과 직접 관련이 없는
+            새로운 판단 과제를 수행하게 됩니다.
           </p>
-          <div class="brief-grid">
-            <article>
-              <h3>조작 포인트</h3>
-              <p>귀여운 영상 프라임 직후 바로 과제에 진입합니다.</p>
-            </article>
-            <article>
-              <h3>행동 포인트</h3>
-              <p>메시지 무시 여부, 답안 작성 방식, 제출 완료 시간을 수집합니다.</p>
-            </article>
-            <article>
-              <h3>조작 방법</h3>
-              <p>데스크톱은 WASD와 E, 모바일은 화면 버튼으로 이동과 상호작용을 합니다.</p>
-            </article>
-          </div>
-          <button class="primary-button" id="enter-game-button">3D 시나리오 시작</button>
-        </div>
-      </section>
-
-      <section class="screen game-screen" data-screen="game">
-        <div class="game-shell">
-          <canvas id="game-canvas"></canvas>
-          <div class="game-hud">
-            <div class="game-overlay-card">
-              <div class="game-hud-top">
-                <span class="screen-tag">3D Scenario</span>
-                <span class="interaction-state" id="interaction-state">이동 중</span>
-              </div>
-              <p class="game-target-title" id="game-target-title">현재 목표: 왼쪽 위 안내 데스크</p>
-              <p class="game-target-route" id="game-target-route">
-                노란 기둥과 링이 보이는 왼쪽 위 안내 데스크로 이동하세요.
-              </p>
-              <p id="mobile-objective" class="mobile-objective">
-                노란 링 안에 들어가면 E, Enter, 또는 하단 버튼으로 상호작용합니다.
-              </p>
-              <div class="legend">
-                <span>이동: WASD / 방향 버튼</span>
-                <span>상호작용: E 또는 Enter / 하단 버튼</span>
-                <span>노란 링 안에 들어가야 상호작용 가능</span>
-              </div>
-            </div>
-
-            <div class="mini-map-card">
-              <div class="mini-map-head">
-                <span class="meta-label">현재 목표 위치</span>
-                <strong id="game-target-location">왼쪽 위 안내 데스크</strong>
-              </div>
-              <div class="mini-map" id="mini-map">
-                <div class="mini-map-grid"></div>
-                <div class="map-landmark" data-map-id="briefingDesk" style="left: 16.4%; top: 83.6%;">지시문</div>
-                <div class="map-landmark" data-map-id="phone" style="left: 82.8%; top: 83.6%;">휴대폰</div>
-                <div class="map-landmark" data-map-id="examDesk" style="left: 50%; top: 46.7%;">시험지</div>
-                <div class="map-landmark" data-map-id="submitBox" style="left: 12.7%; top: 14.1%;">제출함</div>
-                <div class="map-target-dot" id="map-target-dot"></div>
-                <div class="map-player-dot" id="map-player-dot"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="touch-controls" aria-label="모바일 이동 버튼">
-            <button data-control="forward">▲</button>
-            <div class="touch-row">
-              <button data-control="left">◀</button>
-              <button data-control="backward">▼</button>
-              <button data-control="right">▶</button>
-            </div>
-          </div>
-
-          <button id="touch-interact" class="touch-action">상호작용</button>
-        </div>
-      </section>
-
-      <section class="screen" data-screen="survey">
-        <div class="survey-card">
-          <span class="screen-tag">Post Task</span>
-          <h2>후속 평가</h2>
           <p>
-            논문처럼 후속 판단 문항을 붙일 수 있도록, 프로토타입에는 자기평가 문항 두 개를 넣었습니다.
+            아래에는 짧은 상황 설명이 차례대로 제시됩니다. 각 상황을 읽고, 등장인물의 행동이 얼마나
+            도덕적인지 1점에서 7점 사이로 응답해 주세요.
           </p>
 
-          <div class="question-card" data-question="cuteness">
-            <h3>시청한 영상이 얼마나 귀여웠나요?</h3>
-            <div class="scale" id="cuteness-scale"></div>
+          <div class="question-card">
+            <h3>응답 기준</h3>
             <div class="scale-labels">
-              <span>1 전혀 귀엽지 않음</span>
-              <span>7 매우 귀여움</span>
+              <span>1 매우 비도덕적</span>
+              <span>7 매우 도덕적</span>
             </div>
           </div>
 
-          <div class="question-card" data-question="justification">
-            <h3>방금 자신의 선택이 얼마나 정당했다고 느껴졌나요?</h3>
-            <div class="scale" id="justification-scale"></div>
+          <div class="vignette-actions">
+            <button class="primary-button" id="start-vignette-button">시나리오 과제 시작</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" data-screen="vignette">
+        <div class="survey-card vignette-card">
+          <span class="screen-tag">Moral Judgment</span>
+          <div class="vignette-head">
+            <h2 id="vignette-title">시나리오 1</h2>
+            <span class="vignette-counter" id="vignette-counter">1 / 3</span>
+          </div>
+          <p id="vignette-text" class="vignette-text"></p>
+
+          <div class="question-card">
+            <h3>주인공의 행동은 얼마나 도덕적이라고 생각하나요?</h3>
+            <div class="scale" id="vignette-scale"></div>
             <div class="scale-labels">
-              <span>1 전혀 정당하지 않음</span>
-              <span>7 매우 정당함</span>
+              <span>1 매우 비도덕적</span>
+              <span>7 매우 도덕적</span>
             </div>
           </div>
 
-          <div class="question-card" data-question="immersion">
-            <h3>이 시나리오에 얼마나 몰입했나요?</h3>
-            <div class="scale" id="immersion-scale"></div>
-            <div class="scale-labels">
-              <span>1 전혀 몰입되지 않음</span>
-              <span>7 매우 몰입됨</span>
-            </div>
+          <div class="vignette-actions">
+            <button class="primary-button" id="next-vignette-button" disabled>다음 시나리오</button>
           </div>
-
-          <button class="primary-button" id="finish-survey-button" disabled>
-            로그 보기
-          </button>
         </div>
       </section>
 
       <section class="screen" data-screen="result">
         <div class="result-card">
-          <span class="screen-tag">Run Output</span>
-          <h2>실험 로그</h2>
+          <span class="screen-tag">Experiment Complete</span>
+          <h2>실험이 완료되었습니다.</h2>
           <p id="result-summary"></p>
-          <pre id="result-json" class="result-json"></pre>
           <div class="result-actions">
-            <button class="secondary-button" id="copy-results-button">JSON 복사</button>
-            <button class="primary-button" id="restart-button">다시 실행</button>
+            <button class="secondary-button" id="download-csv-button">CSV 다시 저장</button>
+            <button class="primary-button" id="restart-button">처음으로 돌아가기</button>
           </div>
         </div>
       </section>
     </main>
   </div>
-
-  <div class="modal-backdrop is-hidden" id="decision-modal">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decision-title">
-      <span class="screen-tag">Decision</span>
-      <h2 id="decision-title"></h2>
-      <p id="decision-body"></p>
-      <div id="decision-actions" class="modal-actions"></div>
-    </div>
-  </div>
 `;
 
 const screens = [...document.querySelectorAll('.screen')];
 const shell = document.querySelector('.shell');
-const timelineItems = [...document.querySelectorAll('#timeline li')];
 const stageLabel = document.querySelector('#stage-label');
+const timerChip = document.querySelector('#timer-chip');
 const objectiveText = document.querySelector('#objective-text');
 const interactionHint = document.querySelector('#interaction-hint');
-const mobileObjective = document.querySelector('#mobile-objective');
-const timerChip = document.querySelector('#timer-chip');
-const eventFeed = document.querySelector('#event-feed');
-const primeVideo = document.querySelector('#prime-video');
-const primeProgress = document.querySelector('#prime-progress');
-const primeCountdown = document.querySelector('#prime-countdown');
-const decisionModal = document.querySelector('#decision-modal');
-const decisionTitle = document.querySelector('#decision-title');
-const decisionBody = document.querySelector('#decision-body');
-const decisionActions = document.querySelector('#decision-actions');
+
+const stimulusImage = document.querySelector('#stimulus-image');
+const stimulusConditionBadge = document.querySelector('#stimulus-condition-badge');
+const stimulusCounter = document.querySelector('#stimulus-counter');
+const stimulusCountdown = document.querySelector('#stimulus-countdown');
+const stimulusProgressFill = document.querySelector('#stimulus-progress-fill');
+const stimulusScale = document.querySelector('#stimulus-scale');
+
+const vignetteTitle = document.querySelector('#vignette-title');
+const vignetteCounter = document.querySelector('#vignette-counter');
+const vignetteText = document.querySelector('#vignette-text');
+const vignetteScale = document.querySelector('#vignette-scale');
+const nextVignetteButton = document.querySelector('#next-vignette-button');
+const startVignetteButton = document.querySelector('#start-vignette-button');
+
 const resultSummary = document.querySelector('#result-summary');
-const resultJson = document.querySelector('#result-json');
-const finishSurveyButton = document.querySelector('#finish-survey-button');
-const gameTargetTitle = document.querySelector('#game-target-title');
-const gameTargetRoute = document.querySelector('#game-target-route');
-const gameTargetLocation = document.querySelector('#game-target-location');
-const interactionState = document.querySelector('#interaction-state');
-const mapPlayerDot = document.querySelector('#map-player-dot');
-const mapTargetDot = document.querySelector('#map-target-dot');
-const mapLandmarks = [...document.querySelectorAll('.map-landmark')];
+const downloadCsvButton = document.querySelector('#download-csv-button');
 
 const appState = {
+  stage: 'intro',
+  sessionId: null,
+  condition: null,
   sessionStartedAt: null,
-  currentStage: 'intro',
-  primeViewedMs: 0,
-  primeCompleted: false,
-  scenario: {
-    phoneChoice: null,
-    examChoice: null,
-    submitted: false,
-    timedOut: false,
-    completionMs: null
-  },
-  ratings: {
-    cuteness: null,
-    justification: null,
-    immersion: null
-  },
-  gameGuide: {
-    targetId: null,
-    targetLabel: '시작 전',
-    targetLocation: '대기 중',
-    routeHint: '3D 시나리오를 시작하면 위치 안내가 표시됩니다.',
-    interactionReady: false,
-    playerPosition: { x: 0, z: 5 },
-    targetPosition: null,
-    mapLimit: 6.1
-  },
-  runEvents: []
+  stimulusDeck: [],
+  stimulusIndex: 0,
+  currentStimulusRating: null,
+  currentStimulusRatingAt: null,
+  currentStimulusStartedAt: null,
+  currentStimulusFrame: 0,
+  stimulusResponses: [],
+  vignetteIndex: 0,
+  currentVignetteRating: null,
+  vignetteResponses: [],
+  csvDownloaded: false,
+  events: []
 };
 
-function resetState() {
-  appState.sessionStartedAt = performance.now();
-  appState.currentStage = 'intro';
-  appState.primeViewedMs = 0;
-  appState.primeCompleted = false;
-  appState.scenario = {
-    phoneChoice: null,
-    examChoice: null,
-    submitted: false,
-    timedOut: false,
-    completionMs: null
-  };
-  appState.ratings = {
-    cuteness: null,
-    justification: null,
-    immersion: null
-  };
-  appState.gameGuide = {
-    targetId: null,
-    targetLabel: '시작 전',
-    targetLocation: '대기 중',
-    routeHint: '3D 시나리오를 시작하면 위치 안내가 표시됩니다.',
-    interactionReady: false,
-    playerPosition: { x: 0, z: 5 },
-    targetPosition: null,
-    mapLimit: 6.1
-  };
-  appState.runEvents = [];
+function stageName(stage) {
+  return {
+    intro: '실험 안내',
+    stimuli: '사진 평정',
+    bridge: '전환 안내',
+    vignette: '시나리오 평정',
+    result: '결과 확인'
+  }[stage];
 }
 
-resetState();
+function conditionCode(condition) {
+  return condition ? CONDITIONS[condition].code : '미선택';
+}
+
+function shuffle(items) {
+  const clone = [...items];
+  for (let index = clone.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [clone[index], clone[swapIndex]] = [clone[swapIndex], clone[index]];
+  }
+  return clone;
+}
+
+function createSessionId() {
+  return `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function renderScale(target, type) {
+  target.innerHTML = Array.from({ length: 7 }, (_, index) => {
+    const value = index + 1;
+    return `
+      <button class="scale-button" data-scale-type="${type}" data-value="${value}">
+        ${value}
+      </button>
+    `;
+  }).join('');
+}
+
+renderScale(stimulusScale, 'stimulus');
+renderScale(vignetteScale, 'vignette');
+
+function updateScaleSelection(target, value) {
+  target.querySelectorAll('.scale-button').forEach((button) => {
+    button.classList.toggle('is-selected', Number(button.dataset.value) === value);
+  });
+}
 
 function logEvent(type, detail = {}) {
   const record = {
     type,
     detail,
-    elapsedMs: Math.round(performance.now() - appState.sessionStartedAt),
+    elapsedMs: appState.sessionStartedAt
+      ? Math.round(performance.now() - appState.sessionStartedAt)
+      : 0,
     recordedAt: new Date().toISOString()
   };
 
-  appState.runEvents.push(record);
-  const latest = appState.runEvents.slice(-5).reverse();
-  eventFeed.innerHTML = latest
-    .map(
-      (event) =>
-        `<li><strong>${event.type}</strong><span>${Object.keys(event.detail).length ? JSON.stringify(event.detail) : 'detail 없음'}</span></li>`
-    )
-    .join('');
+  appState.events.push(record);
 }
 
 function setStage(stage) {
-  appState.currentStage = stage;
+  appState.stage = stage;
   shell.dataset.stage = stage;
-  stageLabel.textContent = {
-    intro: '소개',
-    prime: '귀여운 영상',
-    brief: '시나리오 안내',
-    game: '3D 시나리오',
-    survey: '후속 평가',
-    result: '로그 확인'
-  }[stage];
+  stageLabel.textContent = stageName(stage);
 
   screens.forEach((screen) => {
     screen.classList.toggle('is-active', screen.dataset.screen === stage);
   });
-
-  timelineItems.forEach((item) => {
-    item.classList.toggle('is-active', item.dataset.stage === stage);
-  });
 }
 
-function updateObjective(text, hint, timer) {
-  objectiveText.textContent = text;
+function updateStatus({ objective, hint, timer }) {
+  objectiveText.textContent = objective;
   interactionHint.textContent = hint;
-  if (timer) {
-    timerChip.textContent = timer;
+  timerChip.textContent = timer;
+}
+
+function resetExperiment() {
+  appState.stage = 'intro';
+  appState.sessionId = null;
+  appState.condition = null;
+  appState.sessionStartedAt = null;
+  appState.stimulusDeck = [];
+  appState.stimulusIndex = 0;
+  appState.currentStimulusRating = null;
+  appState.currentStimulusRatingAt = null;
+  appState.currentStimulusStartedAt = null;
+  if (appState.currentStimulusFrame) {
+    window.cancelAnimationFrame(appState.currentStimulusFrame);
   }
-}
-
-function toMapPercent(value, limit) {
-  return `${((value + limit) / (limit * 2)) * 100}%`;
-}
-
-function renderGameGuide() {
-  const guide = appState.gameGuide;
-  gameTargetTitle.textContent = `현재 목표: ${guide.targetLocation}`;
-  gameTargetRoute.textContent = guide.routeHint;
-  mobileObjective.textContent = guide.interactionReady
-    ? '노란 링 안입니다. E, Enter, 또는 하단 버튼으로 상호작용하세요.'
-    : '미니맵과 노란 기둥을 따라 목표 지점으로 이동하세요.';
-  gameTargetLocation.textContent = guide.targetLocation;
-  interactionState.textContent = guide.interactionReady ? '상호작용 가능' : '이동 중';
-  interactionState.classList.toggle('is-ready', guide.interactionReady);
-
-  mapPlayerDot.style.left = toMapPercent(guide.playerPosition.x, guide.mapLimit);
-  mapPlayerDot.style.top = toMapPercent(guide.playerPosition.z, guide.mapLimit);
-
-  if (guide.targetPosition) {
-    mapTargetDot.style.display = 'block';
-    mapTargetDot.style.left = toMapPercent(guide.targetPosition.x, guide.mapLimit);
-    mapTargetDot.style.top = toMapPercent(guide.targetPosition.z, guide.mapLimit);
-  } else {
-    mapTargetDot.style.display = 'none';
-  }
-
-  mapLandmarks.forEach((landmark) => {
-    landmark.classList.toggle('is-active', landmark.dataset.mapId === guide.targetId);
-  });
-}
-
-function renderScale(targetId, key) {
-  const element = document.querySelector(`#${targetId}`);
-  element.innerHTML = Array.from({ length: 7 }, (_, index) => {
-    const value = index + 1;
-    return `<button class="scale-button" data-key="${key}" data-value="${value}">${value}</button>`;
-  }).join('');
-}
-
-renderScale('cuteness-scale', 'cuteness');
-renderScale('justification-scale', 'justification');
-renderScale('immersion-scale', 'immersion');
-
-function refreshSurveyState() {
-  document.querySelectorAll('.scale-button').forEach((button) => {
-    const key = button.dataset.key;
-    const value = Number(button.dataset.value);
-    button.classList.toggle('is-selected', appState.ratings[key] === value);
-  });
-
-  finishSurveyButton.disabled = !Object.values(appState.ratings).every(Boolean);
-}
-
-refreshSurveyState();
-renderGameGuide();
-
-function requestDecision({ title, body, options }) {
-  decisionTitle.textContent = title;
-  decisionBody.textContent = body;
-  decisionActions.innerHTML = '';
-  decisionModal.classList.remove('is-hidden');
-
-  return new Promise((resolve) => {
-    for (const option of options) {
-      const button = document.createElement('button');
-      button.textContent = option.label;
-      button.className = `modal-button ${option.tone ?? 'primary'}`;
-      button.addEventListener(
-        'click',
-        () => {
-          decisionModal.classList.add('is-hidden');
-          resolve(option.id);
-        },
-        { once: true }
-      );
-      decisionActions.append(button);
-    }
-  });
-}
-
-let game = null;
-let gameLoader = null;
-
-async function ensureGame() {
-  if (game) {
-    return game;
-  }
-
-  if (!gameLoader) {
-    gameLoader = import('./scenario-game.js').then(({ createScenarioGame }) => {
-      game = createScenarioGame({
-        canvas: document.querySelector('#game-canvas'),
-        requestDecision,
-        onUpdate: ({
-          objective,
-          interactHint,
-          timer,
-          scenario,
-          targetId,
-          targetLabel,
-          targetLocation,
-          routeHint,
-          interactionReady,
-          playerPosition,
-          targetPosition,
-          mapLimit
-        }) => {
-          updateObjective(objective, interactHint, timer);
-          appState.scenario = {
-            ...appState.scenario,
-            ...scenario
-          };
-          appState.gameGuide = {
-            targetId,
-            targetLabel,
-            targetLocation,
-            routeHint,
-            interactionReady,
-            playerPosition,
-            targetPosition,
-            mapLimit
-          };
-          renderGameGuide();
-        },
-        onEvent: (event) => {
-          if (event.scenarioSnapshot) {
-            appState.scenario = {
-              ...appState.scenario,
-              ...event.scenarioSnapshot
-            };
-          }
-          logEvent(event.type, event.detail);
-        },
-        onComplete: (payload) => {
-          appState.scenario = {
-            ...appState.scenario,
-            ...payload
-          };
-          logEvent('scenario_completed', {
-            completionMs: payload.completionMs,
-            timedOut: payload.timedOut
-          });
-          setStage('survey');
-          updateObjective(
-            '후속 자기평가 문항을 완료하세요.',
-            '평가가 끝나면 행동 로그를 확인할 수 있습니다.',
-            '완료'
-          );
-        }
-      });
-
-      return game;
-    });
-  }
-
-  return gameLoader;
-}
-
-function beginPrimeSequence() {
-  setStage('prime');
-  updateObjective(
-    '15초 동안 귀여운 영상을 시청하세요.',
-    '영상은 자동으로 넘어갑니다.',
-    `${String(PRIME_DURATION_SECONDS).padStart(2, '0')}s`
-  );
-
-  const startedAt = performance.now();
-  primeVideo.currentTime = 0;
-
-  primeVideo
-    .play()
-    .catch(() => {
-      logEvent('prime_playback_blocked');
-    })
-    .finally(() => {
-      const tick = () => {
-        const elapsed = performance.now() - startedAt;
-        const clamped = Math.min(elapsed, PRIME_DURATION_SECONDS * 1000);
-        appState.primeViewedMs = Math.round(clamped);
-
-        const remaining = Math.max(
-          0,
-          Math.ceil((PRIME_DURATION_SECONDS * 1000 - clamped) / 1000)
-        );
-        const progress = clamped / (PRIME_DURATION_SECONDS * 1000);
-        primeProgress.style.transform = `scaleX(${progress})`;
-        primeCountdown.textContent = `${remaining}s`;
-        timerChip.textContent = `${String(remaining).padStart(2, '0')}s`;
-
-        if (clamped >= PRIME_DURATION_SECONDS * 1000) {
-          primeVideo.pause();
-          appState.primeCompleted = true;
-          logEvent('prime_completed', {
-            viewedMs: appState.primeViewedMs
-          });
-          setStage('brief');
-          updateObjective(
-            '시나리오 안내를 읽고 3D 과제를 시작하세요.',
-            '다음 단계에서 실제 행동 과제가 시작됩니다.',
-            '준비'
-          );
-          return;
-        }
-
-        window.requestAnimationFrame(tick);
-      };
-
-      window.requestAnimationFrame(tick);
-    });
-}
-
-function buildResultPayload() {
-  return {
-    paperBasis: 'Zhang & Ye (2023)',
-    prototype: {
-      primeType: 'cute_video',
-      primeDurationSeconds: PRIME_DURATION_SECONDS,
-      primeViewedMs: appState.primeViewedMs,
-      scenarioType: 'scholarship_exam_cheating'
-    },
-    scenario: {
-      phoneChoice: appState.scenario.phoneChoice,
-      examChoice: appState.scenario.examChoice,
-      submitted: appState.scenario.submitted,
-      timedOut: appState.scenario.timedOut,
-      completionMs: appState.scenario.completionMs
-    },
-    ratings: appState.ratings,
-    events: appState.runEvents
-  };
-}
-
-function renderResults() {
-  const cheated = appState.scenario.examChoice === 'used_leaked_answers';
-  const timedOut = appState.scenario.timedOut;
-
-  resultSummary.textContent = timedOut
-    ? '제한 시간 안에 제출하지 못해 시나리오가 종료되었습니다.'
-    : cheated
-      ? '참가자는 유출 답안을 활용해 시험지를 제출했습니다.'
-      : '참가자는 유출 답안을 사용하지 않고 시험지를 제출했습니다.';
-
-  resultJson.textContent = JSON.stringify(buildResultPayload(), null, 2);
-}
-
-document.querySelector('#start-button').addEventListener('click', () => {
-  resetState();
-  logEvent('run_started');
-  beginPrimeSequence();
-});
-
-document.querySelector('#enter-game-button').addEventListener('click', async () => {
-  const currentGame = await ensureGame();
-  setStage('game');
-  updateObjective(
-    '왼쪽 위 안내 데스크에서 시나리오를 시작하세요.',
-    '노란 링 안에 들어가면 E, Enter, 또는 상호작용 버튼이 활성화됩니다.',
-    '01:15'
-  );
-  currentGame.start();
-  currentGame.resize();
-  logEvent('game_started');
-});
-
-document.querySelectorAll('.scale-button').forEach((button) => {
-  button.addEventListener('click', () => {
-    const key = button.dataset.key;
-    const value = Number(button.dataset.value);
-    appState.ratings[key] = value;
-    logEvent('rating_answered', { key, value });
-    refreshSurveyState();
-  });
-});
-
-finishSurveyButton.addEventListener('click', () => {
-  renderResults();
-  setStage('result');
-  updateObjective(
-    '로그를 확인하고 다시 실행할 수 있습니다.',
-    '실험 서버 연동 전 단계에서는 JSON 확인만 지원합니다.',
-    '완료'
-  );
-});
-
-document.querySelector('#restart-button').addEventListener('click', () => {
-  primeVideo.pause();
-  primeProgress.style.transform = 'scaleX(0)';
-  primeCountdown.textContent = `${PRIME_DURATION_SECONDS}s`;
-  resetState();
-  refreshSurveyState();
+  appState.currentStimulusFrame = 0;
+  appState.stimulusResponses = [];
+  appState.vignetteIndex = 0;
+  appState.currentVignetteRating = null;
+  appState.vignetteResponses = [];
+  appState.csvDownloaded = false;
+  appState.events = [];
+  updateScaleSelection(stimulusScale, null);
+  updateScaleSelection(vignetteScale, null);
   setStage('intro');
-  updateObjective(
-    '실험 시작 버튼을 눌러 준비하세요.',
-    '본 프로토타입은 데스크톱과 모바일 모두에서 실행됩니다.',
-    '01:15'
-  );
-  if (game) {
-    game.stop();
-  }
-  renderGameGuide();
-  logEvent('run_reset');
-});
-
-document.querySelector('#copy-results-button').addEventListener('click', async () => {
-  try {
-    await navigator.clipboard.writeText(resultJson.textContent);
-    logEvent('results_copied');
-  } catch (error) {
-    logEvent('results_copy_failed', { message: error.message });
-  }
-});
-
-document.querySelector('#touch-interact').addEventListener('click', () => {
-  if (game) {
-    game.interact();
-  }
-});
-
-function bindPressButton(button, control) {
-  const press = (event) => {
-    event.preventDefault();
-    if (game) {
-      game.setControl(control, true);
-    }
-  };
-
-  const release = (event) => {
-    event.preventDefault();
-    if (game) {
-      game.setControl(control, false);
-    }
-  };
-
-  button.addEventListener('pointerdown', press);
-  button.addEventListener('pointerup', release);
-  button.addEventListener('pointerleave', release);
-  button.addEventListener('pointercancel', release);
+  updateStatus({
+    objective: '안내를 읽고 조건 A 또는 B를 선택하세요.',
+    hint: '선택 즉시 사진 평정 과제가 시작됩니다.',
+    timer: '대기'
+  });
 }
 
-document.querySelectorAll('[data-control]').forEach((button) => {
-  bindPressButton(button, button.dataset.control);
+function preloadUpcomingStimuli(deck, index) {
+  deck.slice(index + 1, index + 4).forEach((item) => {
+    const image = new Image();
+    image.src = item.src;
+  });
+}
+
+function startExperiment(condition) {
+  appState.sessionId = createSessionId();
+  appState.sessionStartedAt = performance.now();
+  appState.condition = condition;
+  appState.stimulusDeck = shuffle(STIMULI[condition]).slice(0, STIMULUS_COUNT);
+  appState.stimulusIndex = 0;
+  appState.stimulusResponses = [];
+  appState.vignetteResponses = [];
+  appState.vignetteIndex = 0;
+  appState.currentVignetteRating = null;
+  appState.csvDownloaded = false;
+  logEvent('condition_selected', { conditionCode: conditionCode(condition) });
+  setStage('stimuli');
+  loadStimulus(0);
+}
+
+function loadStimulus(index) {
+  const stimulus = appState.stimulusDeck[index];
+
+  if (!stimulus) {
+    startVignettes();
+    return;
+  }
+
+  appState.stimulusIndex = index;
+  appState.currentStimulusRating = null;
+  appState.currentStimulusRatingAt = null;
+  appState.currentStimulusStartedAt = performance.now();
+  updateScaleSelection(stimulusScale, null);
+
+  stimulusImage.src = stimulus.src;
+  stimulusConditionBadge.textContent = '사진 평정';
+  stimulusConditionBadge.dataset.accent = 'generic';
+  stimulusCounter.textContent = `${index + 1} / ${STIMULUS_COUNT}`;
+  updateStatus({
+    objective: `${index + 1}번째 사진을 1~7점으로 평정하세요.`,
+    hint: '사진은 5초 후 자동으로 다음 자극으로 넘어갑니다.',
+    timer: '5.0s'
+  });
+
+  preloadUpcomingStimuli(appState.stimulusDeck, index);
+  tickStimulus();
+}
+
+function tickStimulus() {
+  const elapsed = performance.now() - appState.currentStimulusStartedAt;
+  const remaining = Math.max(0, STIMULUS_DURATION_MS - elapsed);
+  const seconds = (remaining / 1000).toFixed(1);
+  const progress = elapsed / STIMULUS_DURATION_MS;
+
+  stimulusCountdown.textContent = seconds;
+  timerChip.textContent = `${seconds}s`;
+  stimulusProgressFill.style.transform = `scaleX(${Math.min(progress, 1)})`;
+
+  if (elapsed >= STIMULUS_DURATION_MS) {
+    finalizeStimulus();
+    return;
+  }
+
+  appState.currentStimulusFrame = window.requestAnimationFrame(tickStimulus);
+}
+
+function recordStimulusRating(value) {
+  if (appState.stage !== 'stimuli') {
+    return;
+  }
+
+  appState.currentStimulusRating = value;
+  appState.currentStimulusRatingAt = performance.now();
+  updateScaleSelection(stimulusScale, value);
+}
+
+function finalizeStimulus() {
+  window.cancelAnimationFrame(appState.currentStimulusFrame);
+  appState.currentStimulusFrame = 0;
+
+  const stimulus = appState.stimulusDeck[appState.stimulusIndex];
+  const response = {
+    stimulusId: stimulus.id,
+    conditionCode: conditionCode(appState.condition),
+    rating: appState.currentStimulusRating,
+    responseMs: appState.currentStimulusRatingAt
+      ? Math.round(appState.currentStimulusRatingAt - appState.currentStimulusStartedAt)
+      : null,
+    viewedMs: STIMULUS_DURATION_MS
+  };
+
+  appState.stimulusResponses.push(response);
+  logEvent('stimulus_completed', {
+    stimulusId: response.stimulusId,
+    rating: response.rating
+  });
+
+  loadStimulus(appState.stimulusIndex + 1);
+}
+
+function startVignettes() {
+  setStage('bridge');
+  updateStatus({
+    objective: '다음은 별개의 시나리오 판단 과제입니다.',
+    hint: '안내를 읽은 뒤 시나리오 과제를 시작하세요.',
+    timer: '안내'
+  });
+}
+
+function beginVignetteRatings() {
+  setStage('vignette');
+  renderVignette(0);
+}
+
+function renderVignette(index) {
+  const vignette = VIGNETTES[index];
+  appState.vignetteIndex = index;
+  appState.currentVignetteRating = null;
+  updateScaleSelection(vignetteScale, null);
+  nextVignetteButton.disabled = true;
+  nextVignetteButton.textContent =
+    index === VIGNETTES.length - 1 ? '결과 보기' : '다음 시나리오';
+  vignetteTitle.textContent = vignette.title;
+  vignetteCounter.textContent = `${index + 1} / ${VIGNETTES.length}`;
+  vignetteText.textContent = vignette.text;
+  updateStatus({
+    objective: `${index + 1}번째 시나리오를 1~7점으로 평정하세요.`,
+    hint: '1은 매우 비도덕적, 7은 매우 도덕적입니다.',
+    timer: '평정'
+  });
+}
+
+function recordVignetteRating(value) {
+  if (appState.stage !== 'vignette') {
+    return;
+  }
+
+  appState.currentVignetteRating = value;
+  updateScaleSelection(vignetteScale, value);
+  nextVignetteButton.disabled = false;
+}
+
+function finalizeCurrentVignette() {
+  if (appState.currentVignetteRating == null) {
+    return;
+  }
+
+  const vignette = VIGNETTES[appState.vignetteIndex];
+  appState.vignetteResponses.push({
+    vignetteId: vignette.id,
+    rating: appState.currentVignetteRating
+  });
+
+  logEvent('vignette_completed', {
+    vignetteId: vignette.id,
+    rating: appState.currentVignetteRating
+  });
+
+  if (appState.vignetteIndex === VIGNETTES.length - 1) {
+    showResults();
+    return;
+  }
+
+  renderVignette(appState.vignetteIndex + 1);
+}
+
+function average(values) {
+  if (!values.length) {
+    return null;
+  }
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  return Number((sum / values.length).toFixed(2));
+}
+
+function escapeCsvValue(value) {
+  if (value == null) {
+    return '';
+  }
+  const stringValue = String(value).replace(/"/g, '""');
+  return `"${stringValue}"`;
+}
+
+function buildCsv() {
+  const headers = [
+    'session_id',
+    'condition',
+    'phase',
+    'trial_index',
+    'item_id',
+    'item_label',
+    'rating',
+    'response_ms',
+    'viewed_ms'
+  ];
+
+  const rows = [headers.join(',')];
+
+  appState.stimulusResponses.forEach((response, index) => {
+    rows.push(
+      [
+        appState.sessionId,
+        conditionCode(appState.condition),
+        'stimulus',
+        index + 1,
+        response.stimulusId,
+        'cuteness_rating',
+        response.rating ?? '',
+        response.responseMs ?? '',
+        response.viewedMs ?? ''
+      ]
+        .map(escapeCsvValue)
+        .join(',')
+    );
+  });
+
+  appState.vignetteResponses.forEach((response, index) => {
+    const vignette = VIGNETTES.find((item) => item.id === response.vignetteId);
+    rows.push(
+      [
+        appState.sessionId,
+        conditionCode(appState.condition),
+        'vignette',
+        index + 1,
+        response.vignetteId,
+        vignette?.title ?? response.vignetteId,
+        response.rating ?? '',
+        '',
+        ''
+      ]
+        .map(escapeCsvValue)
+        .join(',')
+    );
+  });
+
+  return rows.join('\n');
+}
+
+function downloadCsv() {
+  const csv = buildCsv();
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${appState.sessionId}-${conditionCode(appState.condition)}-results.csv`;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+  appState.csvDownloaded = true;
+  logEvent('csv_downloaded', {
+    filename: `${appState.sessionId}-${conditionCode(appState.condition)}-results.csv`
+  });
+}
+
+function showResults() {
+  const stimulusMean = average(
+    appState.stimulusResponses
+      .filter((response) => response.rating != null)
+      .map((response) => response.rating)
+  );
+  const moralMean = average(appState.vignetteResponses.map((response) => response.rating));
+
+  logEvent('experiment_completed', {
+    conditionCode: conditionCode(appState.condition),
+    meanStimulusRating: stimulusMean,
+    meanMoralRating: moralMean
+  });
+
+  const missingCount = appState.stimulusResponses.filter((response) => response.rating == null).length;
+  resultSummary.textContent =
+    `조건 ${conditionCode(appState.condition)}에서 사진 ${appState.stimulusResponses.length}장을 제시했습니다. ` +
+    `사진 귀여움 평균은 ${stimulusMean ?? 'N/A'}점, ` +
+    `시나리오 도덕성 평균은 ${moralMean ?? 'N/A'}점입니다. ` +
+    `사진 응답 누락은 ${missingCount}개입니다.`;
+  setStage('result');
+  updateStatus({
+    objective: '실험이 완료되었습니다.',
+    hint: '결과 CSV는 자동으로 저장되며, 필요하면 다시 저장할 수 있습니다.',
+    timer: '완료'
+  });
+  downloadCsv();
+}
+
+function handleScaleClick(event) {
+  const button = event.target.closest('.scale-button');
+  if (!button) {
+    return;
+  }
+
+  const value = Number(button.dataset.value);
+  const type = button.dataset.scaleType;
+
+  if (type === 'stimulus') {
+    recordStimulusRating(value);
+  } else if (type === 'vignette') {
+    recordVignetteRating(value);
+  }
+}
+
+document.querySelectorAll('[data-condition]').forEach((button) => {
+  button.addEventListener('click', () => {
+    startExperiment(button.dataset.condition);
+  });
 });
+
+stimulusScale.addEventListener('click', handleScaleClick);
+vignetteScale.addEventListener('click', handleScaleClick);
+
+nextVignetteButton.addEventListener('click', finalizeCurrentVignette);
+startVignetteButton.addEventListener('click', beginVignetteRatings);
+downloadCsvButton.addEventListener('click', downloadCsv);
+
+document.querySelector('#restart-button').addEventListener('click', resetExperiment);
 
 window.addEventListener('keydown', (event) => {
-  if (decisionModal.classList.contains('is-hidden') === false) {
+  if (appState.stage === 'intro') {
+    if (event.code === 'KeyA') {
+      startExperiment('neutral');
+    } else if (event.code === 'KeyB') {
+      startExperiment('cute');
+    }
     return;
   }
 
-  if (!game) {
+  const keyValue = Number(event.key);
+  const validScaleKey = Number.isInteger(keyValue) && keyValue >= 1 && keyValue <= 7;
+
+  if (appState.stage === 'stimuli' && validScaleKey) {
+    recordStimulusRating(keyValue);
     return;
   }
 
-  if (event.code === 'KeyW' || event.code === 'ArrowUp') {
-    game.setControl('forward', true);
-  } else if (event.code === 'KeyS' || event.code === 'ArrowDown') {
-    game.setControl('backward', true);
-  } else if (event.code === 'KeyA' || event.code === 'ArrowLeft') {
-    game.setControl('left', true);
-  } else if (event.code === 'KeyD' || event.code === 'ArrowRight') {
-    game.setControl('right', true);
-  } else if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
-    game.setControl('sprint', true);
-  } else if (event.code === 'KeyE' || event.code === 'Enter' || event.code === 'Space') {
-    if (event.repeat) {
+  if (appState.stage === 'bridge') {
+    if (event.code === 'Enter' || event.code === 'Space') {
+      event.preventDefault();
+      beginVignetteRatings();
+    }
+    return;
+  }
+
+  if (appState.stage === 'vignette') {
+    if (validScaleKey) {
+      recordVignetteRating(keyValue);
       return;
     }
-    event.preventDefault();
-    game.interact();
+
+    if ((event.code === 'Enter' || event.code === 'Space') && !nextVignetteButton.disabled) {
+      event.preventDefault();
+      finalizeCurrentVignette();
+    }
   }
 });
 
-window.addEventListener('keyup', (event) => {
-  if (!game) {
-    return;
-  }
-
-  if (event.code === 'KeyW' || event.code === 'ArrowUp') {
-    game.setControl('forward', false);
-  } else if (event.code === 'KeyS' || event.code === 'ArrowDown') {
-    game.setControl('backward', false);
-  } else if (event.code === 'KeyA' || event.code === 'ArrowLeft') {
-    game.setControl('left', false);
-  } else if (event.code === 'KeyD' || event.code === 'ArrowRight') {
-    game.setControl('right', false);
-  } else if (event.code === 'ShiftLeft' || event.code === 'ShiftRight') {
-    game.setControl('sprint', false);
-  }
-});
-
-window.addEventListener('resize', () => {
-  if (game) {
-    game.resize();
-  }
-});
-
-setStage('intro');
-updateObjective(
-  '실험 시작 버튼을 눌러 준비하세요.',
-  '본 프로토타입은 데스크톱과 모바일 모두에서 실행됩니다.',
-  '01:15'
-);
+resetExperiment();
